@@ -20,6 +20,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -41,8 +42,7 @@ import com.google.protobuf.Timestamp;
 public class Main {
 	
 	 public static void main(String[] args) throws IOException, InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException, InterruptedException {
-		// connectToDb DB=new connectToDb();
-		// Properties properties = DB.getProperties();
+		 
 		 UploadExcel up=new UploadExcel();
 		 
 		System.out.println("in upload files batch program");
@@ -52,15 +52,20 @@ public class Main {
 		 while (true) {
 			 
 			 try {
-			
-			 up.NewTruckersData();
-			
-			 TimeUnit.MINUTES.sleep(10);
+				 connectToDb DB=new connectToDb();
+				 Properties properties = DB.getProperties();
+				 String excelFilePath = properties.getProperty("csvpath");
+				 List<String> FilePathList=DB.getFilename(excelFilePath);
+				 System.out.println("file list size"+FilePathList.size());
+				 if(FilePathList.size()>0) {
+			 up.NewTruckersData(FilePathList,excelFilePath);
+				 } 
+			 TimeUnit.MINUTES.sleep(5);
 			 
 			 }
 			 catch(Exception e) {
 				 System.out.println("File not found to upload"+e);
-				 TimeUnit.MINUTES.sleep(100);
+				 TimeUnit.MINUTES.sleep(5);
 			 }	 
 	 } 
 }}

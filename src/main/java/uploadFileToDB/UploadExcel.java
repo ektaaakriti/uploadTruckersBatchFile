@@ -12,46 +12,48 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.sql.*;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.*;
  
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
 public class UploadExcel {
 	DataCheck check=new DataCheck();
-		static connectToDb DB=new connectToDb();
-		 static Connection dbcon=DB.connect_db();
+	static connectToDb DB=new connectToDb();
+	 static Connection dbcon=DB.connect_db();
 
-		 static Properties properties = DB.getProperties();
-		 public static Logger log = LogManager.getLogger(Upload.class.getName());
-		 public void NewTruckersData() throws IOException, ParseException {
-	String excelFilePath = properties.getProperty("csvpath");
-List<String> FilePathList=DB.getFilename(excelFilePath);
+	 static Properties properties = DB.getProperties();
+		 public static Logger log = LogManager.getLogger(UploadExcel.class.getName());
+		 
+		 public void NewTruckersData(List<String> FilePathList,String excelFilePath) throws IOException, ParseException, SQLException {
+	//String excelFilePath = properties.getProperty("csvpath");
+//List<String> FilePathList=DB.getFilename(excelFilePath);
 System.out.println("file list size"+FilePathList.size());
 if(FilePathList.size()>0) {
 	System.out.println("file list size1"+FilePathList.size());
 for(int a=0;a<FilePathList.size();a++){
 	 System.out.println("File path "+FilePathList.get(a));
-	 String excelFilePath1=excelFilePath.concat(FilePathList.get(a));
+	 String excelFilePath1=excelFilePath.concat( FilePathList.get(a));
 	 System.out.println("file path is"+excelFilePath1);
     int batchSize = 1000;
+    java.util.Date dataentd = new java.util.Date(); 
+	 java.sql.Date dataentdt = new java.sql.Date(dataentd.getTime());
+    long start = System.currentTimeMillis();
+  //  long millis=System.currentTimeMillis();
+    java.sql.Date datesql=new java.sql.Date(start);
+    Random r = new Random();
+    int File_id = 1000 + (int)(r.nextDouble() * 9999);
 
-    
 	 try {
-		 java.util.Date dataentd = new java.util.Date(); 
-		 java.sql.Date dataentdt = new java.sql.Date(dataentd.getTime());
-         long start = System.currentTimeMillis();
-       //  long millis=System.currentTimeMillis();
-         java.sql.Date datesql=new java.sql.Date(start);
+		
          FileInputStream inputStream = new FileInputStream(excelFilePath1);
 
          Workbook workbook = new XSSFWorkbook(inputStream);
 
          Sheet firstSheet = workbook.getSheetAt(0);
          Iterator<Row> rowIterator = firstSheet.iterator();
-         System.out.println("1");
+         
          int applicant_id_sequence=applicant_id();
-         System.out.println("applicant_id"+applicant_id_sequence);
+         
          
          dbcon.setAutoCommit(false);
          System.out.println("2");
@@ -146,19 +148,15 @@ for(int a=0;a<FilePathList.size();a++){
                  case 0:
                      vehicle_no = nextCell.getStringCellValue();
                       vehicle=check.string(vehicle_no);
-                     if(vehicle==false) {
-                    	 response=response+" vehicle no="+vehicle_no;
-                     }
-                     System.out.println("vehicle is ok");
+                    
+                    
                      break;
                  case 1:
-                	 System.out.println("company name is");
-                      company_name = nextCell.getStringCellValue();
-                      System.out.println("company name is1"+company_name);
-                     company_name=company_name.replace(" ","_");
-                     System.out.println("company name is2"+company_name);
+                	                      company_name = nextCell.getStringCellValue();
+                                          company_name=company_name.replace(" ","_");
+                     
                       company_code=get_company_code(company_name);
-                      System.out.println("company name is3"+company_name);
+                    
                      if(company_code==null) {
                     	  company=false;
                     	 response=response+", company name="+company_name;
@@ -166,7 +164,7 @@ for(int a=0;a<FilePathList.size();a++){
                      else {
                     	 company=true;
                      }
-                     System.out.println("company name is4"+company_name);
+                     
                      
                      break;
                  case 2:
@@ -183,49 +181,38 @@ for(int a=0;a<FilePathList.size();a++){
                      if(adob==true) {
                      if(!applicant_date_of_birth.isEmpty()) {
          	           	String[] dobbb=applicant_date_of_birth.trim().split("\\.");
-         	           	System.out.println(applicant_date_of_birth);
-         	         	
-         	           	System.out.println(dobbb.length);
-         	           	System.out.println(dobbb[0]);
+         	           
          	           	String dobb=dobbb[0]+"-"+dobbb[1]+"-"+dobbb[2];
-         	           	System.out.println(dobb);
-         	           	java.util.Date date = sdf1.parse(dobb);
+         	                    	           	java.util.Date date = sdf1.parse(dobb);
          	           	 app_dob = new java.sql.Date(date.getTime());
-         	           System.out.println("dob1");
+         	          
                      }}
                      else {
-                    	 response=response+", applicant_dob="+applicant_date_of_birth;
+                    	// response=response+", applicant_dob="+applicant_date_of_birth;
                      }
                      break;
                      case 4:
-                         System.out.println("age1");
+                        
                          try {
                          age = (int) (nextCell.getNumericCellValue());
                         
-                         System.out.println("age2");
+                         
                          agecheck=true;}
                         	 catch(Exception e) {
                         		 agecheck=false;
-                        		 response=response+", age="+age;
+                        		// response=response+", age="+age;
                         	 }
                          
                          break;
                      case 5:
                           marital_status = (nextCell.getStringCellValue());
                           marital=check.marritalstatus(marital_status);
-                          if(marital==false)
-                          {
-                        	  response=response+", marital status="+marital_status;
-                          }
-                         System.out.println(response) ; 
+                          
                          break;
                          
 				case 6:
                           nominee_name = (nextCell.getStringCellValue());
                          nominee_nme=check.string(nominee_name);
-                         if(nominee_nme==false) {
-                        	 response=response+", nominee_name="+nominee_name;
-                         }
                         
                          break;
                      case 7:
@@ -234,21 +221,19 @@ for(int a=0;a<FilePathList.size();a++){
                          if(nominee_dob==true) {
                         	 	if(!nominee_date_of_birth.isEmpty()) {
                         	 		String[] dobbb=nominee_date_of_birth.trim().split("\\.");
-                        	 		System.out.println(nominee_date_of_birth);
-             	         	
-                        	 		System.out.println(dobbb.length);
-                        	 		System.out.println(dobbb[0]);
+                        	 		
                         	 		String dobb=dobbb[0]+"-"+dobbb[1]+"-"+dobbb[2];
-                        	 		System.out.println(dobb);
+                        	 		
                         	 		java.util.Date date = sdf1.parse(dobb);
                         	 		nominee_date_of_birt = new java.sql.Date(date.getTime());
-                        	 		System.out.println(nominee_date_of_birth);
-                        
-                        	 		System.out.println("dob1");}
+                        	 		}
                         	 	else {
-                        	 		response=response+", nominee dob="+nominee_date_of_birth;}}
+                        	 		//response=response+", nominee dob="+nominee_date_of_birth;
+                        	 		}
+                        	 		}
                         	 	else {
-                        	 		response=response+", nominee dob="+nominee_date_of_birth;}
+                        	 		//response=response+", nominee dob="+nominee_date_of_birth;
+                        	 		}
                          break; 
                          case 8:
                              System.out.println("age12");
@@ -256,7 +241,7 @@ for(int a=0;a<FilePathList.size();a++){
                               nominee_age = (int) (nextCell.getNumericCellValue());
                               nomine_age=true;}
                              catch(Exception e) {
-                            	 response=response+", nominee_age="+nominee_age;
+                            	// response=response+", nominee_age="+nominee_age;
                             	 nomine_age=false;
                              }
                              
@@ -267,7 +252,7 @@ for(int a=0;a<FilePathList.size();a++){
                               nominee_relation = (nextCell.getStringCellValue());
                               nomineerelation=check.string(nominee_relation);
                               if(nomineerelation==false) {
-                            	  response=response+", nominee_relation="+nominee_relation;
+                            	//  response=response+", nominee_relation="+nominee_relation;
                               }
                              
                              break;
@@ -275,7 +260,7 @@ for(int a=0;a<FilePathList.size();a++){
                              spouse_name = (nextCell.getStringCellValue());
                              spousename=check.string(spouse_name);
                              if(spousename==false) {
-                            	 response=response+", spouse_name="+spouse_name;
+                            	// response=response+", spouse_name="+spouse_name;
                              }
                              statement.setString(11, spouse_name);
                              break;
@@ -283,7 +268,7 @@ for(int a=0;a<FilePathList.size();a++){
                               father_name = (nextCell.getStringCellValue());
                               fathername=check.string(father_name);
                               if(fathername==false) {
-                            	  response=response+", father_name="+father_name;
+                            	 // response=response+", father_name="+father_name;
                               }
                              
                              break;
@@ -291,7 +276,7 @@ for(int a=0;a<FilePathList.size();a++){
                               religion = (nextCell.getStringCellValue());
                               religio=check.string(religion);
                               if(religio==false) {
-                            	  response=response+", religion="+religion;
+                            	 // response=response+", religion="+religion;
                               }
                             
                              break;
@@ -299,7 +284,7 @@ for(int a=0;a<FilePathList.size();a++){
                              education = (nextCell.getStringCellValue());
                              edu=check.education(education);
                              if(edu==false) {
-                            	 response=response+", education="+education;
+                            	// response=response+", education="+education;
                              }
                              
                              break;
@@ -307,7 +292,7 @@ for(int a=0;a<FilePathList.size();a++){
                               job_type = (nextCell.getStringCellValue());
                               jobType=check.job(job_type);
                               if(jobType==false) {
-                            	  response=response+", job_type="+job_type;
+                            	 // response=response+", job_type="+job_type;
                               }
                              
                              break;
@@ -319,7 +304,7 @@ for(int a=0;a<FilePathList.size();a++){
                               village_name = (nextCell.getStringCellValue());
                               villagename=check.string(village_name);
                               if(villagename==false) {
-                            	  response=response+", village_name"+village_name;
+                            	 // response=response+", village_name"+village_name;
                               }
                              
                              break;
@@ -328,7 +313,7 @@ for(int a=0;a<FilePathList.size();a++){
                               pin = (int)(nextCell.getNumericCellValue());
                               pincode=check.pincode(pin);
                               if(pincode==false) {
-                            	  response=response+", pincode="+pin;
+                            	 // response=response+", pincode="+pin;
                               }
                              
                         	                             break; 
@@ -337,7 +322,7 @@ for(int a=0;a<FilePathList.size();a++){
                                       mobile =(long) (nextCell.getNumericCellValue());
                                       mobileno=check.mobile(mobile);
                                       if(mobileno==false) {
-                                    	  response=response+", mobile no="+mobile;
+                                    	 // response=response+", mobile no="+mobile;
                                       }
                                     
                                 	 
@@ -348,7 +333,7 @@ for(int a=0;a<FilePathList.size();a++){
                                  family_no = (int)(nextCell.getNumericCellValue());
                                  familyno=true;}
                             	 catch(Exception e) {
-                            		 response=response+", family_no="+family_no;
+                            		// response=response+", family_no="+family_no;
                             		 familyno=false;
                             	 }
                                
@@ -360,7 +345,7 @@ for(int a=0;a<FilePathList.size();a++){
                                  workingno=true;}
                             	 catch(Exception e) {
                             		workingno=false;
-                            		response=response+", working_member="+working_no;
+                            		//response=response+", working_member="+working_no;
                             	 }
                                  
                             	                           
@@ -368,28 +353,20 @@ for(int a=0;a<FilePathList.size();a++){
                              case 21:
                                   house_type = (nextCell.getStringCellValue());
                                   housetype=check.house(house_type);
-                                  if(housetype==false) {
-                                	  response=response+", house_type="+house_type;
-                                  }
+                                  
                                  
                                  break;
                              case 22:
                                   ration_card = (nextCell.getStringCellValue());
                                   rationcard=check.YN(ration_card);
-                                  if(rationcard==false) {
-                                	  response=response+", ration card="+ration_card;
-                                  }
+                                 
                                  
                                  break;
 
                              case 23:
                                   medical = (nextCell.getStringCellValue());
                                   medica=check.YN(medical);
-                                  if(medica==false) {
-                                	  response=response+", medical="+medical;
-                                  }
                                  
-                                 System.out.println("medical");
                                  break;
                              case 24:
                             	// if(!nextCell.getStringCellValue().isEmpty()) {
@@ -398,7 +375,7 @@ for(int a=0;a<FilePathList.size();a++){
                                  loann=true;}
                             	 catch(Exception e) {
                             		 loann=false;
-                            		 response=response+", outstanding loan amount="+loan;
+                            		// response=response+", outstanding loan amount="+loan;
                             	 }
                                  
                             	
@@ -410,7 +387,7 @@ for(int a=0;a<FilePathList.size();a++){
                                   interst=true;}
                             	 catch(Exception e) {
                             		 interst=false;
-                            		 response=response+", outstanding interset="+interest;
+                            		// response=response+", outstanding interset="+interest;
                             	 }
                                
                             	 
@@ -423,7 +400,7 @@ for(int a=0;a<FilePathList.size();a++){
                                  }
                                  catch(Exception e) {
                                 	 incom=false;
-                                	 response=response+", income="+income;
+                                	// response=response+", income="+income;
                                  }
                                 
                             
@@ -435,7 +412,7 @@ for(int a=0;a<FilePathList.size();a++){
                                 }
                                 catch(Exception e) {
                                 	otherincome=false;
-                                	response=response+", income from other sources"+other_income;
+                                	//response=response+", income from other sources"+other_income;
                                 }
                                  
                             	 
@@ -447,7 +424,7 @@ for(int a=0;a<FilePathList.size();a++){
                                  }
                                  catch(Exception e) {
                                 	 foodd=false;
-                                	 response=response+", food expense="+food;
+                                	// response=response+", food expense="+food;
                                  }
                                  
                             	                                  
@@ -459,7 +436,7 @@ for(int a=0;a<FilePathList.size();a++){
                                   rentt=true;}
                             	 catch(Exception e) {
                             		 rentt=false;
-                            		 response=response+", rent="+rent;
+                            		// response=response+", rent="+rent;
                             	 }
                                  
                             	 
@@ -471,7 +448,7 @@ for(int a=0;a<FilePathList.size();a++){
                                  }
                                  catch(Exception e) {
                                 	 repairr=false;
-                                	 response=response+", repair="+repair;
+                                	// response=response+", repair="+repair;
                                  }
                                 
                             	
@@ -483,7 +460,7 @@ for(int a=0;a<FilePathList.size();a++){
                                  }
                                  catch(Exception e) {
                                 	 bil=false;
-                                	 response=response+", bill="+bill;
+                                	// response=response+", bill="+bill;
                                  }
                                  
                             	
@@ -495,7 +472,7 @@ for(int a=0;a<FilePathList.size();a++){
                                  otherr=true;}
                             	 catch(Exception e) {
                             		 otherr=false;
-                            		 response=response+", other expenses="+other;
+                            		// response=response+", other expenses="+other;
                             	 }
                                  
                             	                                 break;
@@ -505,39 +482,8 @@ for(int a=0;a<FilePathList.size();a++){
                  
                  
              }//while 1
-             System.out.println("vehicle"+vehicle);
-             System.out.println("company"+company);
-             System.out.println( truckername);
-             System.out.println( adob);
-             System.out.println( agecheck);
-             System.out.println( marital);
-             System.out.println( nominee_nme);
-             System.out.println( "nominee dob"+nominee_dob);
-             System.out.println( nomine_age);
-             System.out.println( nomineerelation);
-             System.out.println( spousename);
-             System.out.println( "fathername"+fathername);
-             System.out.println( religio);
-             System.out.println( jobType);
-             System.out.println( "education"+edu);
-             System.out.println( villagename);
-             System.out.println( pincode);
-             System.out.println( mobileno);
-             System.out.println(  familyno );
-             System.out.println( workingno);
-             System.out.println( "house type"+housetype);
-             System.out.println( rationcard);
-             System.out.println( medica);
-             System.out.println("loan"+ loann);
-             System.out.println( interst);
-             System.out.println( incom);
-             System.out.println( otherincome);
-             System.out.println( foodd);
-             System.out.println("rent"+rentt);
-             System.out.println("repair"+repairr);
-             System.out.println( bil);
-             System.out.println( otherr);
-                 if(  vehicle==true && company==true &&truckername==true &&adob==true &&
+            
+              /*   if(  vehicle==true && company==true && adob==true &&
            agecheck==true &&
            marital==true &&
            nominee_nme==true &&
@@ -565,7 +511,8 @@ for(int a=0;a<FilePathList.size();a++){
            rentt==true &&
            repairr==true &&
            bil==true &&
-           otherr==true ) {
+           otherr==true ) {*/
+            if(truckername==true&& mobileno==true) {
                 	 System.out.println("all values are true");
                  statement.setString(1, vehicle_no);
                  statement.setString(2, company_name);
@@ -607,23 +554,29 @@ for(int a=0;a<FilePathList.size();a++){
                
 
                 statement.setDate(36,dataentdt);
-applicant_id_sequence++;
+
                  System.out.println(response) ;
-                 statement.addBatch(); }//if clodse
+                 statement.addBatch();
+                 updateErrorlOg(datesql,"no error",FilePathList.get(a),row_no,trucker_name,(long) applicant_id_sequence,File_id);  
+                 applicant_id_sequence++;     
+            }//if clodse
                          
                  
 else {
 	 System.out.println("all values are not true");
 	 System.out.println("response is"+response);
-	 updateErrorlOg(datesql,response,FilePathList.get(a),row_no);
+	 updateMasterlOg(datesql,"error in uploading applicant data",FilePathList.get(a),File_id);
 }   
+            if(response=="error in feilds- ") {
+            	updateMasterlOg(datesql,"File is uploaded successfully",FilePathList.get(a),File_id);
+            }
          }//while 2
              
                 
                 
              if (count % batchSize == 0) {
                 statement.executeBatch();                                                      
-             }              
+            }              
              
          
 	 
@@ -634,7 +587,7 @@ else {
          statement.executeBatch();
          updateport_gen(applicant_id_sequence) ;
          dbcon.commit();
-         dbcon.close();
+        // dbcon.close();
         //updateport_gen(applicant_id_sequence) ;
          long end = System.currentTimeMillis();
          System.out.printf("Import done in %d ms\n", (end - start));
@@ -643,10 +596,13 @@ else {
 	 catch (IOException ex1) {
          System.out.println("Error reading file"+ex1);
          ex1.printStackTrace();
+         updateMasterlOg(datesql," Error reading file"+ex1,FilePathList.get(a),File_id);
      } catch (SQLException ex2) {
          System.out.println("Database error"+ex2);
+         updateMasterlOg(datesql," Error reading file"+ex2,FilePathList.get(a),File_id);
          ex2.printStackTrace();
      }
+	
 	 
 		
 		a++;
@@ -664,11 +620,17 @@ System.out.println("No file to be copied");
 					log.info("connection done");
 					ResultSet rs1 = stmt1.executeQuery("select * from port_gen");
 					
-					while (rs1.next()) {
+					List<Integer> list = new ArrayList<>();
+int i=0;
+					while(rs1.next()){
+					  // list.add(rs.getString("col_name3"));
+					
 						
-						applicant_idsequence=Integer.parseInt(rs1.getString("next_val"));
-						//System.out.println("port_gen"+applicant_idsequence);
+						list.add(Integer.parseInt(rs1.getString("next_val")));
+						
 						}
+					applicant_idsequence=list.get(0);
+					System.out.println("port_gen"+applicant_idsequence);
 			}
 					catch(Exception e) {
 						log.error("error in sequence generator"+ e);
@@ -719,9 +681,9 @@ System.out.println("No file to be copied");
 		 return company_code;
 		 
 	 }
-		 public void updateErrorlOg(Date date,String response,String filename,int row_no) {
+		 public void updateErrorlOg(Date date,String response,String filename,int row_no,String applicant_name,Long Applicant_id,int File_id) {
 			 try {
-			 String sql = "INSERT INTO uploadApplicants(DateTime, error, Filename,row_no) values(?,?,?,?)";
+			 String sql = "INSERT INTO uploadApplicants(date_time, error, Filename,row_no,applicant_name,applicant_id,file_id) values(?,?,?,?,?,?,?)";
              PreparedStatement statement = dbcon.prepareStatement(sql);
              long now = System.currentTimeMillis();
              Timestamp date1 = new Timestamp(now);
@@ -733,14 +695,48 @@ System.out.println("No file to be copied");
              statement.setObject(1,date1);
             	statement.setString(2, response);
             statement.setString(3,filename);
-            statement.setString(4, "row_no"+row_no);
+            if(row_no==0) {
+            	statement.setString(4,"no error");
+            }
+            else {
+            statement.setString(4, "row_no"+row_no);}
+            statement.setString(5, applicant_name);
+            statement.setLong(6, Applicant_id);
+            statement.setInt(7, File_id);
             statement.execute();
-            System.out.println("reponse is saved succesfully");
+            System.out.println("response is saved succesfully");
 		 }
 			 catch(Exception e){
-				 System.out.println("errpr in updating error"+e);
+				 System.out.println("error in updating error"+e);
 			 }
 				 
 			 }
+		 public void updateMasterlOg(Date date,String response,String filename,int file_id) {
+			 try {
+				// File_no, File_name, Log, datetime
+			 String sql = "INSERT INTO uploadlogmaster (File_name,Log,datetime,file_id) values(?,?,?,?)";
+             PreparedStatement statement = dbcon.prepareStatement(sql);
+             long now = System.currentTimeMillis();
+             Timestamp date1 = new Timestamp(now);
+             Date date2 = new Date(date1.getTime());
+            // System.out.println("row no is"+row_no);
+             System.out.println("date is timestamp"+date1);
+             System.out.println("date is date"+date2);
+             System.out.println("date is util"+date);
+             statement.setString(1,filename);
+            	statement.setString(2, response);
+            statement.setObject(3,date2);
+            statement.setInt(4, file_id);
+            
+           // statement.setString(5, applicant_name);
+            statement.execute();
+            System.out.println("response is saved succesfully");
+		 }
+			 catch(Exception e){
+				 System.out.println("error in updating error"+e);
+			 }
+				 
+			 }
+
 
 }
